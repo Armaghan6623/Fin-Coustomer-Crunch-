@@ -4,9 +4,19 @@ import numpy as np
 import yaml
 
 def load_config():
-    config_path = os.path.join("config", "config.yaml")
-    with open(config_path, "r") as f:
+    repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+    config_path = os.path.join(repo_root, "config", "config.yaml")
+
+    for enc in ("utf-8", "utf-8-sig", "utf-16", "utf-16-le", "utf-16-be"):
+        try:
+            with open(config_path, "r", encoding=enc) as f:
+                return yaml.safe_load(f)
+        except UnicodeDecodeError:
+            continue
+
+    with open(config_path, "r", encoding="utf-8") as f:
         return yaml.safe_load(f)
+
 
 def build_behavioral_features():
     config = load_config()
