@@ -64,3 +64,4 @@ jobs:
         file: ./Dockerfile
         push: false  # Change to true later if deploying to Docker Hub/AWS
         tags: attrition-app:latest
+        
