@@ -1,0 +1,13 @@
+﻿system:
+  project_name: "fintech-attrition-platform"
+  version: "1.0.0"
+
+paths:
+  raw_data_path: "data/raw/live_transactions.csv"
+  processed_data_path: "data/processed/customer_features.csv"
+  model_output_path: "src/services/models/champion_model.joblib"
+
+model_parameters:
+  test_size: 0.2
+  random_state: 42
+  scale_pos_weight: 5

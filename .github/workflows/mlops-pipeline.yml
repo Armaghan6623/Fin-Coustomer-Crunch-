@@ -1,0 +1,66 @@
+name: MLOps Automation Suite
+
+# Trigger the pipeline automatically whenever someone pushes code to the main branch
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  quality-and-testing:
+    name: Code Verification & Unit Testing
+    runs-on: ubuntu-latest
+
+    steps:
+    # 1. Pull down the code from GitHub's server
+    - name: Checkout Code Repository
+      uses: actions/checkout@v4
+
+    # 2. Set up a clean, isolated Python runner
+    - name: Initialize Python Environment
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+        cache: 'pip'
+
+    # 3. Install core dependencies matching your requirements.txt
+    - name: Install Application Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pytest httpx
+
+    # 4. Generate mock features and retrain the model artifact on the runner
+    - name: Execute Pipeline Retraining Loop
+      run: |
+        python src/data_stream/generator.py
+        python src/pipelines/feature_engineering.py
+        python src/pipelines/train.py
+
+    # 5. Run the unit tests we just fixed to gatekeep the build
+    - name: Run Automated Pytest Suite
+      run: |
+        pytest src/services/test_app.py -v
+
+  docker-delivery:
+    name: Container Recompilation Check
+    needs: quality-and-testing  # Only run this job if the tests completely pass!
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code Repository
+      uses: actions/checkout@v4
+
+    # Set up Docker BuildX on the runner engine
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    # Dry-run compilation of the Docker container to ensure no syntax/OS issues
+    - name: Build Local Container Image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: ./Dockerfile
+        push: false  # Change to true later if deploying to Docker Hub/AWS
+        tags: attrition-app:latest
